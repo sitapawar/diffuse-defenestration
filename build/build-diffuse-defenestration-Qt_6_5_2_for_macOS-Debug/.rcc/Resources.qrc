@@ -1,9 +1,0 @@
-<RCC>
-  <qresource prefix="/">
-    <file alias="resources/shaders/default.frag">/Users/sitapawar/Desktop/graphics/diffuse-defenestration/resources/shaders/default.frag</file>
-    <file alias="resources/shaders/default.vert">/Users/sitapawar/Desktop/graphics/diffuse-defenestration/resources/shaders/default.vert</file>
-    <file alias="resources/shaders/texture.vert">/Users/sitapawar/Desktop/graphics/diffuse-defenestration/resources/shaders/texture.vert</file>
-    <file alias="resources/shaders/texture.frag">/Users/sitapawar/Desktop/graphics/diffuse-defenestration/resources/shaders/texture.frag</file>
-  </qresource>
-</RCC>
-
