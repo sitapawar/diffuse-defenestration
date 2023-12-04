@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Sets project name
-project(projects_realtime LANGUAGES CXX C)
+project(diffuse-defenestration LANGUAGES CXX C)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -84,7 +84,7 @@ qt6_add_resources(${PROJECT_NAME} "Resources"
         resources/shaders/texture.frag
 )
 
-target_sources(projects_realtime_other_files
+target_sources(diffuse-defenestration_other_files
   PRIVATE
 
 )
