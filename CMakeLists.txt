@@ -43,6 +43,7 @@ add_executable(${PROJECT_NAME}
     src/realtime.h
     src/settings.h
     src/utils/scenedata.h
+    src/utils/tiny_obj_loader.h
     src/utils/scenefilereader.h
     src/utils/sceneparser.h
     src/utils/shaderloader.h
