@@ -81,13 +81,10 @@ qt6_add_resources(${PROJECT_NAME} "Resources"
     FILES
         resources/shaders/default.frag
         resources/shaders/default.vert
-	resources/shaders/texture.vert
+        resources/shaders/texture.vert
         resources/shaders/texture.frag
-)
-
-target_sources(diffuse-defenestration_other_files
-  PRIVATE
-
+        resources/shaders/model.vert
+        resources/shaders/model.frag
 )
 
 # GLEW: this provides support for Windows (including 64-bit)

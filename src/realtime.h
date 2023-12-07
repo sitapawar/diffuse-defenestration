@@ -35,6 +35,10 @@ public:
     void paintTexture(GLuint texture, bool invert, bool blur, bool grey, bool sobel, bool sharpen);
     void makeFBO();
 
+    void initializeModelBuffer();
+    void loadModel();
+    void paintModel();
+
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
 
@@ -81,6 +85,8 @@ private:
     GLuint m_shader;
     GLuint m_texture_shader;
 
+    GLuint m_model_shader;
+
     //vbos and vaos
     GLuint cube_vbo;
     GLuint cube_vao;
@@ -91,11 +97,16 @@ private:
     GLuint cyl_vbo;
     GLuint cyl_vao;
 
+    GLuint model_vbo;
+    GLuint model_vao;
+
     //vert data
     std::vector<float> m_sphereData;
     std::vector<float> m_cubeData;
     std::vector<float> m_coneData;
     std::vector<float> m_cylData;
+
+    std::vector<float> m_modelData;
 
     //shape obj
     Cube m_cube;

@@ -11,6 +11,8 @@
 #include "utils/shaderloader.h"
 #include "shapes/Sphere.h"
 #include "shapes/Cube.h"
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <utils/tiny_obj_loader.h>
 
 
 // ================== Project 5: Lights, Camera
@@ -46,6 +48,8 @@ void Realtime::finish() {
     glDeleteVertexArrays(1, &cube_vao);
     glDeleteBuffers(1, &cyl_vbo);
     glDeleteVertexArrays(1, &cyl_vao);
+    glDeleteBuffers(1, &model_vbo);
+    glDeleteVertexArrays(1, &model_vao);
 
     //delete fbo stuff
     glDeleteTextures(1, &m_fbo_texture);
@@ -89,6 +93,7 @@ void Realtime::initializeGL() {
     //set up shader here
     m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
     m_texture_shader = ShaderLoader::createShaderProgram(":/resources/shaders/texture.vert", ":/resources/shaders/texture.frag");
+    m_model_shader = ShaderLoader::createShaderProgram(":/resources/shaders/model.vert", ":/resources/shaders/model.frag");
 
     //store variables
     storeVariables();
@@ -100,7 +105,129 @@ void Realtime::initializeGL() {
     fillCTMs();
     setUpTextures();
 
+    initializeModelBuffer();
+
     glUseProgram(0);
+
+    update();
+}
+
+void Realtime::initializeModelBuffer() {
+    glGenBuffers(1, &model_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, model_vbo);
+    // Load model data
+    loadModel();
+    // Send data to VBO
+    glBufferData(GL_ARRAY_BUFFER,m_modelData.size() * sizeof(GLfloat),m_modelData.data(), GL_STATIC_DRAW);
+    // Generate, and bind vao
+    glGenVertexArrays(1, &model_vao);
+    glBindVertexArray(model_vao);
+
+    //  Enable and define attribute 1 to store vertex normals
+    glEnableVertexAttribArray(0); //position
+    glEnableVertexAttribArray(1); //normal
+    glEnableVertexAttribArray(2); //tex coord
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat),
+                          nullptr);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat),
+                          reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat),
+                          reinterpret_cast<void *>(6 * sizeof(GLfloat)));
+
+    // Clean-up bindings
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+}
+
+void Realtime::loadModel() {
+//    const std::string MODEL_PATH = "scenefiles/demo-viking/viking_room.obj";
+    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
+    const QString TEXTURE_PATH = QString(":/scenefiles/demo-viking/viking_room.png");
+
+    tinyobj::ObjReaderConfig reader_config;
+    reader_config.mtl_search_path = "./"; // Path to material files
+
+    QImage texture_image = QImage(TEXTURE_PATH);
+
+    tinyobj::ObjReader reader;
+
+    if (!reader.ParseFromFile(MODEL_PATH, reader_config)) {
+        if (!reader.Error().empty()) {
+            std::cerr << "TinyObjReader: " << reader.Error();
+        }
+        exit(1);
+    }
+
+    if (!reader.Warning().empty()) {
+        std::cout << "TinyObjReader: " << reader.Warning();
+    }
+
+    auto& attrib = reader.GetAttrib();
+    auto& shapes = reader.GetShapes();
+    auto& materials = reader.GetMaterials();
+
+    // Loop over shapes
+    for (size_t s = 0; s < shapes.size(); s++) {
+        // Loop over faces(polygon)
+        size_t index_offset = 0;
+        for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+            size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
+
+            // Loop over vertices in the face.
+            for (size_t v = 0; v < fv; v++) {
+                // access to vertex
+                tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+                tinyobj::real_t vx = attrib.vertices[3*size_t(idx.vertex_index)+0];
+                tinyobj::real_t vy = attrib.vertices[3*size_t(idx.vertex_index)+1];
+                tinyobj::real_t vz = attrib.vertices[3*size_t(idx.vertex_index)+2];
+
+                // Check if `normal_index` is zero or positive. negative = no normal data
+                // Check if `texcoord_index` is zero or positive. negative = no texcoord data
+                if (idx.normal_index >= 0 && idx.texcoord_index >= 0) {
+                    tinyobj::real_t nx = attrib.normals[3*size_t(idx.normal_index)+0];
+                    tinyobj::real_t ny = attrib.normals[3*size_t(idx.normal_index)+1];
+                    tinyobj::real_t nz = attrib.normals[3*size_t(idx.normal_index)+2];
+                    tinyobj::real_t tx = attrib.texcoords[2*size_t(idx.texcoord_index)+0];
+                    tinyobj::real_t ty = attrib.texcoords[2*size_t(idx.texcoord_index)+1];
+
+                    m_modelData.push_back(vx); m_modelData.push_back(vy); m_modelData.push_back(vz);
+                    m_modelData.push_back(nx); m_modelData.push_back(ny); m_modelData.push_back(nz);
+                    m_modelData.push_back(tx); m_modelData.push_back(ty);
+                }
+            }
+            index_offset += fv;
+
+            // per-face material
+            shapes[s].mesh.material_ids[f];
+        }
+    }
+}
+
+void Realtime::paintModel() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBindVertexArray(model_vao);
+
+    // clear
+    // Task 24: Bind FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    // Task 28: Call glViewport
+    glViewport(0, 0,  m_screen_width, m_screen_height);
+    //link shader
+    glUseProgram(m_model_shader);
+
+    glUniformMatrix4fv(glGetUniformLocation(m_model_shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_model_shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
+
+
+    // Draw Command
+    glDrawArrays(GL_TRIANGLES, 0, 1);
+
+    // Unbind Vertex Array
+    glBindVertexArray(0);
+
+    //deactivate the shader program by passing 0 into glUseProgram
+    glUseProgram(0);
+
 }
 
 
@@ -363,72 +490,8 @@ void Realtime::paintGL() {
     int m_lightCount = fmin(8, m_renderData.lights.size());
 
 
-    for (const RenderShapeData& shape : m_renderData.shapes) {
-        //link shader
-        glUseProgram(m_shader);
-
-        currCTM = ctm_list[i];
-        //switch statement for each shape
-        switch(shape.primitive.type){
-        case(PrimitiveType::PRIMITIVE_CUBE):
-            glBindVertexArray(cube_vao);
-            count = m_cubeData.size()/6;
-            break;
-        case(PrimitiveType::PRIMITIVE_CONE):
-            glBindVertexArray(cone_vao);
-            count = m_coneData.size()/6;
-            break;
-        case(PrimitiveType::PRIMITIVE_CYLINDER):
-            glBindVertexArray(cyl_vao);
-            count = m_cylData.size()/6;
-            break;
-        case(PrimitiveType::PRIMITIVE_SPHERE):
-            glBindVertexArray(sphere_vao);
-            count = m_sphereData.size()/6;
-            break;
-        default:
-            break;
-        }
-        ca = shape.primitive.material.cAmbient;
-        cd = shape.primitive.material.cDiffuse;
-        cs = shape.primitive.material.cReflective;
-        shininess = shape.primitive.material.shininess;
-
-
-
-        //pass in lights
-        lightsForShader();
-        glUniform1i(glGetUniformLocation(m_shader, "lightCount"), m_lightCount);
-
-        //pass model matrix, view matrix, and projection matrix into the vertex shader
-        glUniformMatrix4fv(glGetUniformLocation(m_shader, "modelMatrix"), 1, GL_FALSE, &currCTM[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(m_shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(m_shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
-
-        //pass ka,kd,ks, shininess, and cam.pos into fragment shader
-        glUniform1f(glGetUniformLocation(m_shader, "k_a"), m_ka);
-        glUniform1f(glGetUniformLocation(m_shader, "k_d"), m_kd);
-        glUniform1f(glGetUniformLocation(m_shader, "k_s"), m_ks);
-        glm::vec4 cameraPos = m_viewInverse[3];
-        glUniform4fv(glGetUniformLocation(m_shader, "worldCamPos"), 1, &cameraPos[0]);
-        glUniform1f(glGetUniformLocation(m_shader, "shininess"), shininess);
-
-        glUniform4fv(glGetUniformLocation(m_shader, "c_a"), 1, &ca[0]);
-        glUniform4fv(glGetUniformLocation(m_shader, "c_d"), 1, &cd[0]);
-        glUniform4fv(glGetUniformLocation(m_shader, "c_s"), 1, &cs[0]);
-
-        // Draw Command
-        glDrawArrays(GL_TRIANGLES, 0, count);
-
-        // Unbind Vertex Array
-        glBindVertexArray(0);
-
-        //deactivate the shader program by passing 0 into glUseProgram
-        glUseProgram(0);
-
-        i+=1;
-
-    }
+//    paintGeometry();
+    paintModel();
 
     //FBO stuff
     // Task 25: Bind the default framebuffer
