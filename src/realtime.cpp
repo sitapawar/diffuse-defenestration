@@ -220,7 +220,7 @@ void Realtime::paintModel() {
 
 
     // Draw Command
-    glDrawArrays(GL_TRIANGLES, 0, 1);
+    glDrawArrays(GL_TRIANGLES, 0, m_modelData.size() / 8);
 
     // Unbind Vertex Array
     glBindVertexArray(0);
