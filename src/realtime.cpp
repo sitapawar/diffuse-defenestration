@@ -141,8 +141,13 @@ void Realtime::initializeModelBuffer() {
 
 void Realtime::loadModel() {
 //    const std::string MODEL_PATH = "scenefiles/demo-viking/viking_room.obj";
+<<<<<<< HEAD
 //    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
     const std::string MODEL_PATH = "/Users/sitapawar/Desktop/viking_room.obj";
+=======
+    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/surreal/portal1.obj";
+//    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
+>>>>>>> 235dbcef437c768cc44db74b669a9ee4e4420195
     const QString TEXTURE_PATH = QString(":/scenefiles/demo-viking/viking_room.png");
 
     tinyobj::ObjReaderConfig reader_config;
@@ -219,6 +224,9 @@ void Realtime::paintModel() {
     glUniformMatrix4fv(glGetUniformLocation(m_model_shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(m_model_shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
 
+    if(m_renderData.shapes.size() > 0) { //TODO: figure out how to put this into the JSON
+        lightsForShader(m_model_shader, m_renderData.shapes[0].primitive.material);
+    }
 
     // Draw Command
     glDrawArrays(GL_TRIANGLES, 0, m_modelData.size() / 8);
@@ -317,7 +325,10 @@ void Realtime::genBufferData(){
     }
 }
 
-void Realtime::lightsForShader() {
+void Realtime::lightsForShader(int shaderToFill, SceneMaterial material) {
+    int lightCount = fmin(8, m_renderData.lights.size());
+    glUniform1i(glGetUniformLocation(shaderToFill, "lightCount"), lightCount);
+
     //we don't actually need the different light types here but I though we did so I'm leaving it tho I don't actually use it
     std::string lightUniforms[] = {
         "lightIntensities",
@@ -330,11 +341,11 @@ void Realtime::lightsForShader() {
     };
 
     // fill light uniforms with light data for phong
-    for (int j = 0; j < m_renderData.lights.size(); j++) {
+    for (int j = 0; j < lightCount; j++) {
         SceneLightData curLight = m_renderData.lights[j];
         for (const std::string& uniform : lightUniforms) {
             std::string uniformStr = uniform + "[" + std::to_string(j) + "]";
-            GLint uniformLoc = glGetUniformLocation(m_shader, uniformStr.c_str());
+            GLint uniformLoc = glGetUniformLocation(shaderToFill, uniformStr.c_str());
 
             if (uniform == "lightIntensities") {
                 glUniform4fv(uniformLoc, 1, &curLight.color[0]);
@@ -364,6 +375,19 @@ void Realtime::lightsForShader() {
             }
         }
     }
+
+    //pass ka,kd,ks, shininess, and cam.pos into fragment shader
+    glUniform1f(glGetUniformLocation(shaderToFill, "k_a"), m_ka);
+    glUniform1f(glGetUniformLocation(shaderToFill, "k_d"), m_kd);
+    glUniform1f(glGetUniformLocation(shaderToFill, "k_s"), m_ks);
+    glm::vec4 cameraPos = m_viewInverse[3];
+    glUniform4fv(glGetUniformLocation(shaderToFill, "worldCamPos"), 1, &cameraPos[0]);
+    glUniform1f(glGetUniformLocation(shaderToFill, "shininess"), material.shininess);
+
+    glUniform4fv(glGetUniformLocation(shaderToFill, "c_a"), 1, &material.cAmbient[0]);
+    glUniform4fv(glGetUniformLocation(shaderToFill, "c_d"), 1, &material.cDiffuse[0]);
+    glUniform4fv(glGetUniformLocation(shaderToFill, "c_s"), 1, &material.cSpecular[0]);
+
 }
 
 
@@ -398,8 +422,6 @@ void Realtime::paintGeometry(){
     glm::vec4 cd;
     glm::vec4 cs;
     float shininess;
-    int m_lightCount = fmin(8, m_renderData.lights.size());
-
 
     for (const RenderShapeData& shape : m_renderData.shapes) {
         currCTM = ctm_list[i];
@@ -438,25 +460,12 @@ void Realtime::paintGeometry(){
         glUseProgram(m_shader);
 
         //pass in lights
-        lightsForShader();
-        glUniform1i(glGetUniformLocation(m_shader, "lightCount"), m_lightCount);
+        lightsForShader(m_shader, shape.primitive.material);
 
         //pass model matrix, view matrix, and projection matrix into the vertex shader
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "modelMatrix"), 1, GL_FALSE, &currCTM[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
-
-        //pass ka,kd,ks, shininess, and cam.pos into fragment shader
-        glUniform1f(glGetUniformLocation(m_shader, "k_a"), m_ka);
-        glUniform1f(glGetUniformLocation(m_shader, "k_d"), m_kd);
-        glUniform1f(glGetUniformLocation(m_shader, "k_s"), m_ks);
-        glm::vec4 cameraPos = m_viewInverse[3];
-        glUniform4fv(glGetUniformLocation(m_shader, "worldCamPos"), 1, &cameraPos[0]);
-        glUniform1f(glGetUniformLocation(m_shader, "shininess"), shininess);
-
-        glUniform4fv(glGetUniformLocation(m_shader, "c_a"), 1, &ca[0]);
-        glUniform4fv(glGetUniformLocation(m_shader, "c_d"), 1, &cd[0]);
-        glUniform4fv(glGetUniformLocation(m_shader, "c_s"), 1, &cs[0]);
 
         // Draw Command
         glDrawArrays(GL_TRIANGLES, 0, count);
@@ -480,16 +489,6 @@ void Realtime::paintGL() {
     glViewport(0, 0,  m_fbo_width, m_fbo_height);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glm::mat4 currCTM;
-    int i = 0;
-    int count = 1; //used in draw command depending on the shape
-    glm::vec4 ca;
-    glm::vec4 cd;
-    glm::vec4 cs;
-    float shininess;
-    int m_lightCount = fmin(8, m_renderData.lights.size());
-
 
 //    paintGeometry();
     paintModel();

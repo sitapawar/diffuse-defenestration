@@ -29,7 +29,7 @@ public:
     void genBufferData();
     void fillCTMs();
     void storeVariables();
-    void lightsForShader();
+    void lightsForShader(int shaderToFill, SceneMaterial material);
     void setUpTextures();
     void paintGeometry();
     void paintTexture(GLuint texture, bool invert, bool blur, bool grey, bool sobel, bool sharpen);
