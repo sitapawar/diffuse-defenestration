@@ -141,13 +141,10 @@ void Realtime::initializeModelBuffer() {
 
 void Realtime::loadModel() {
 //    const std::string MODEL_PATH = "scenefiles/demo-viking/viking_room.obj";
-<<<<<<< HEAD
 //    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
     const std::string MODEL_PATH = "/Users/sitapawar/Desktop/viking_room.obj";
-=======
-    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/surreal/portal1.obj";
+//    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/surreal/portal1.obj";
 //    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
->>>>>>> 235dbcef437c768cc44db74b669a9ee4e4420195
     const QString TEXTURE_PATH = QString(":/scenefiles/demo-viking/viking_room.png");
 
     tinyobj::ObjReaderConfig reader_config;
@@ -758,17 +755,20 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
 
         // x rotation (around the up axis) (yaw rotation)
         glm::mat3 xRot = calculateRotMat(5 * (float)deltaX / width(), glm::vec3(0, 1, 0));
+        // Apply the rotation to the camera's position, look, and up vectors
+        m_renderData.cameraData.pos = glm::vec4(xRot * glm::vec3(m_renderData.cameraData.pos), 1);
+        m_renderData.cameraData.look = glm::vec4(xRot * glm::vec3(m_renderData.cameraData.look), 0);
+        m_renderData.cameraData.up = glm::vec4(xRot * glm::vec3(m_renderData.cameraData.up), 0);
+
+        // Calculate the vertical axis after the x rotation
+        glm::vec3 vertAxis = normalize(cross(glm::vec3(m_renderData.cameraData.look), glm::vec3(m_renderData.cameraData.up)));
 
         // y rotation (around the vertical axis) (pitch)
-        glm::vec3 vertAxis = normalize(cross(glm::vec3(m_renderData.cameraData.look), glm::vec3(m_renderData.cameraData.up)));
         glm::mat3 yRot = calculateRotMat(5 * (float)deltaY / height(), vertAxis);
-
-        // Combine x and y rotations
-        glm::mat3 totalRotation = yRot * xRot;
-
-        // Apply the combined rotation to the camera's orientation
-        m_renderData.cameraData.look = glm::vec4(totalRotation * glm::vec3(m_renderData.cameraData.look), 0);
-        m_renderData.cameraData.up = glm::vec4(totalRotation * glm::vec3(m_renderData.cameraData.up), 0);
+        // Apply the rotation to the camera's position, look, and up vectors
+        m_renderData.cameraData.pos = glm::vec4(yRot * glm::vec3(m_renderData.cameraData.pos), 1);
+        m_renderData.cameraData.look = glm::vec4(yRot * glm::vec3(m_renderData.cameraData.look), 0);
+        m_renderData.cameraData.up = glm::vec4(yRot * glm::vec3(m_renderData.cameraData.up), 0);
 
         // Update the view matrix based on the new camera orientation
         m_view = m_camera.updateViewMat(m_renderData.cameraData.pos, m_renderData.cameraData.look, m_renderData.cameraData.up);
@@ -779,7 +779,6 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         update(); // asks for a PaintGL() call to occur
     }
 }
-
 
 void Realtime::timerEvent(QTimerEvent *event) {
     int elapsedms   = m_elapsedTimer.elapsed();
