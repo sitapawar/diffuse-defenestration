@@ -141,7 +141,8 @@ void Realtime::initializeModelBuffer() {
 
 void Realtime::loadModel() {
 //    const std::string MODEL_PATH = "scenefiles/demo-viking/viking_room.obj";
-    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
+//    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
+    const std::string MODEL_PATH = "/Users/sitapawar/Desktop/viking_room.obj";
     const QString TEXTURE_PATH = QString(":/scenefiles/demo-viking/viking_room.png");
 
     tinyobj::ObjReaderConfig reader_config;
