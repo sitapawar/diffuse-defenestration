@@ -36,6 +36,7 @@ public:
     void makeFBO();
 
     void initializeModelBuffer();
+    void initializeTexture();
     void loadModel();
     void paintModel();
 
@@ -86,6 +87,9 @@ private:
     GLuint m_texture_shader;
 
     GLuint m_model_shader;
+
+    GLuint m_model_texture;
+    QImage m_model_texture_image;
 
     //vbos and vaos
     GLuint cube_vbo;

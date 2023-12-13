@@ -53,6 +53,7 @@ add_executable(${PROJECT_NAME}
     src/shapes/Cube.h
     src/shapes/Cylinder.h
     src/camera/camera.h
+    src/utils/debug.h
 
 
 )

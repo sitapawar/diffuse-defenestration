@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include "settings.h"
 #include "shapes/Cone.h"
+#include "utils/debug.h"
 #include "utils/sceneparser.h"
 #include "utils/shaderloader.h"
 #include "shapes/Sphere.h"
@@ -113,10 +114,14 @@ void Realtime::initializeGL() {
 }
 
 void Realtime::initializeModelBuffer() {
-    glGenBuffers(1, &model_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, model_vbo);
     // Load model data
     loadModel();
+
+    //init texture
+    initializeTexture();
+
+    glGenBuffers(1, &model_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, model_vbo);
     // Send data to VBO
     glBufferData(GL_ARRAY_BUFFER,m_modelData.size() * sizeof(GLfloat),m_modelData.data(), GL_STATIC_DRAW);
     // Generate, and bind vao
@@ -139,16 +144,31 @@ void Realtime::initializeModelBuffer() {
     glBindBuffer(GL_ARRAY_BUFFER,0);
 }
 
+void Realtime::initializeTexture() {
+    glGenTextures(1, &m_model_texture);
+    glActiveTexture(GL_TEXTURE1); // Use GL_TEXTURE1 as the texture unit
+    glBindTexture(GL_TEXTURE_2D, m_model_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_model_texture_image.width(), m_model_texture_image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, m_model_texture_image.bits());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0); // Unbind the texture
+    // Note: Make sure to keep the shader program bound if you intend to set uniforms immediately after this
+    glUseProgram(m_model_shader);
+
+    glUniform1i(glGetUniformLocation(m_model_shader, "textureSampler"), 1); // Use texture unit GL_TEXTURE1
+    std::cout << m_model_texture_image.pixelColor(0, 0).name().toStdString() << std::endl;
+}
+
 void Realtime::loadModel() {
 //    const std::string MODEL_PATH = "scenefiles/demo-viking/viking_room.obj";
-    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/surreal/portal1.obj";
-//    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
-    const QString TEXTURE_PATH = QString(":/scenefiles/demo-viking/viking_room.png");
+//    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/surreal/portal1.obj";
+    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
+    const QString TEXTURE_PATH = QString("/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.png");
 
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = "./"; // Path to material files
 
-    QImage texture_image = QImage(TEXTURE_PATH);
+    m_model_texture_image = QImage(TEXTURE_PATH).convertToFormat(QImage::Format_RGBA8888).mirrored();
 
     tinyobj::ObjReader reader;
 
@@ -223,15 +243,19 @@ void Realtime::paintModel() {
         lightsForShader(m_model_shader, m_renderData.shapes[0].primitive.material);
     }
 
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_model_texture);
+
     // Draw Command
     glDrawArrays(GL_TRIANGLES, 0, m_modelData.size() / 8);
 
-    // Unbind Vertex Array
+    // Unbind Vertex Array and texture
     glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     //deactivate the shader program by passing 0 into glUseProgram
     glUseProgram(0);
-
+    Debug::glErrorCheck();
 }
 
 
