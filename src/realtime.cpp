@@ -160,18 +160,9 @@ void Realtime::initializeTexture() {
 }
 
 void Realtime::loadModel() {
-//    const std::string MODEL_PATH = "scenefiles/demo-viking/viking_room.obj";
-<<<<<<< HEAD
 //    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/surreal/portal1.obj";
     const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
     const QString TEXTURE_PATH = QString("/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.png");
-=======
-//    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
-    const std::string MODEL_PATH = "/Users/sitapawar/Desktop/viking_room.obj";
-//    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/surreal/portal1.obj";
-//    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
-    const QString TEXTURE_PATH = QString(":/scenefiles/demo-viking/viking_room.png");
->>>>>>> 946d2b9d59994a0369df65ac419eea54c85160d4
 
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = "./"; // Path to material files

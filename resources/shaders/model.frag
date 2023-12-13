@@ -35,6 +35,11 @@ float computeAttenuation(float dist, vec3 func) {
 
 void main() {
     fragColor = vec4(1);
+    vec4 texColor = texture(textureSampler, outTexCoord);
+    vec4 c_a = texColor;
+    vec4 c_d = texColor;
+    vec4 c_s = texColor;
+
     //ambient term
     fragColor = k_a * c_a;
 
@@ -95,5 +100,4 @@ void main() {
         fragColor.rgb += specularColor*fatt*falloff;
         }
     }
-    fragColor = texture(textureSampler, outTexCoord);
 }
