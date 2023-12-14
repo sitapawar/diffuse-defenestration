@@ -1,6 +1,9 @@
 Group: Diffuse-Defenstrators (Andy Burris, Sita Pawar, Jackson Ho)
 
-Our group's original idea was to create a scene of a room with a window, and to have shadow effects, texturing, as well as a particle system (snow outside the window). Our final product ended up being quite different: we were able to implement .obj loading using tinyobjloader to be able to render arbitrary meshes, as well as texturing those meshes, to create multiple scenes. However, we were unable to implement shadowing or particle systems in an aesthetic way to the scene. 
+Our group's original idea was to create a scene of a room with a window, and to have shadow effects, texturing, as well as a particle system
+(snow outside the window). Our final product ended up being quite different: we were able to implement .obj loading using tinyobjloader to
+be able to render arbitrary meshes, as well as texturing those meshes, to create multiple scenes. However, we were unable to implement
+shadowing or particle systems in an aesthetic way to the scene. 
 
 Resources/Credits:
 Here are a list of resources we used for our final — this includes code and general knowledge
