@@ -2,6 +2,7 @@
 
 // Defined before including GLEW to suppress deprecation messages on macOS
 #include "camera/camera.h"
+#include "model.h"
 #include "utils/sceneparser.h"
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
@@ -35,10 +36,11 @@ public:
     void paintTexture(GLuint texture, bool invert, bool blur, bool grey, bool sobel, bool sharpen);
     void makeFBO();
 
-    void initializeModelBuffer();
-    void initializeTexture();
-    void loadModel();
-    void paintModel();
+    void initializeModel(std::string modelPath, std::string texturePath, int index);
+    void initializeModelBuffer(Model &model);
+    void initializeTexture(Model &model);
+    void loadModel(Model &model, std::string modelPath, std::string texturePath);
+    void paintModel(Model &model);
 
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
@@ -83,13 +85,11 @@ private:
 
     //Realtime Pipeline Variables
     RenderData m_renderData;
+    std::vector<Model> m_models;
+
     GLuint m_shader;
     GLuint m_texture_shader;
-
     GLuint m_model_shader;
-
-    GLuint m_model_texture;
-    QImage m_model_texture_image;
 
     //vbos and vaos
     GLuint cube_vbo;
@@ -101,16 +101,11 @@ private:
     GLuint cyl_vbo;
     GLuint cyl_vao;
 
-    GLuint model_vbo;
-    GLuint model_vao;
-
     //vert data
     std::vector<float> m_sphereData;
     std::vector<float> m_cubeData;
     std::vector<float> m_coneData;
     std::vector<float> m_cylData;
-
-    std::vector<float> m_modelData;
 
     //shape obj
     Cube m_cube;

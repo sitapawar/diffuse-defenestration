@@ -49,8 +49,10 @@ void Realtime::finish() {
     glDeleteVertexArrays(1, &cube_vao);
     glDeleteBuffers(1, &cyl_vbo);
     glDeleteVertexArrays(1, &cyl_vao);
-    glDeleteBuffers(1, &model_vbo);
-    glDeleteVertexArrays(1, &model_vao);
+    for(Model model : m_models) {
+        glDeleteBuffers(1, &model.model_vbo);
+        glDeleteVertexArrays(1, &model.model_vao);
+    }
 
     //delete fbo stuff
     glDeleteTextures(1, &m_fbo_texture);
@@ -106,27 +108,49 @@ void Realtime::initializeGL() {
     fillCTMs();
     setUpTextures();
 
-    initializeModelBuffer();
+    std::vector<std::string> paths = std::vector<std::string> {
+//        "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj",
+//        "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.png",
+        "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/plane/CanyonPlane.obj",
+        "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/plane/BaseColor.png",
+        "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/plane/CanyonLowPoly.obj",
+        "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/plane/CanyonTerrain.png"
+    };
+    for(int i = 0; i < paths.size(); i+=2) {
+        std::string modelPath = paths[i];
+        std::string texturePath = paths[i + 1];
+        initializeModel(modelPath, texturePath, i / 2);
+    }
+
 
     glUseProgram(0);
 
     update();
 }
 
-void Realtime::initializeModelBuffer() {
+void Realtime::initializeModel(std::string modelPath, std::string texturePath, int index) {
+    Model model;
+    model.textureIndex = index + 1;
+
     // Load model data
-    loadModel();
+    loadModel(model, modelPath, texturePath);
 
     //init texture
-    initializeTexture();
+    initializeTexture(model);
 
-    glGenBuffers(1, &model_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, model_vbo);
+    initializeModelBuffer(model);
+
+    m_models.push_back(model);
+}
+
+void Realtime::initializeModelBuffer(Model &model) {
+    glGenBuffers(1, &model.model_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, model.model_vbo);
     // Send data to VBO
-    glBufferData(GL_ARRAY_BUFFER,m_modelData.size() * sizeof(GLfloat),m_modelData.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, model.modelData.size() * sizeof(GLfloat), model.modelData.data(), GL_STATIC_DRAW);
     // Generate, and bind vao
-    glGenVertexArrays(1, &model_vao);
-    glBindVertexArray(model_vao);
+    glGenVertexArrays(1, &model.model_vao);
+    glBindVertexArray(model.model_vao);
 
     //  Enable and define attribute 1 to store vertex normals
     glEnableVertexAttribArray(0); //position
@@ -144,34 +168,29 @@ void Realtime::initializeModelBuffer() {
     glBindBuffer(GL_ARRAY_BUFFER,0);
 }
 
-void Realtime::initializeTexture() {
-    glGenTextures(1, &m_model_texture);
-    glActiveTexture(GL_TEXTURE1); // Use GL_TEXTURE1 as the texture unit
-    glBindTexture(GL_TEXTURE_2D, m_model_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_model_texture_image.width(), m_model_texture_image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, m_model_texture_image.bits());
+void Realtime::initializeTexture(Model &model) {
+    glGenTextures(1, &model.textureID);
+    glActiveTexture(GL_TEXTURE0 + model.textureIndex); // Use GL_TEXTURE1 as the texture unit
+    glBindTexture(GL_TEXTURE_2D, model.textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, model.modelTexture.width(), model.modelTexture.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, model.modelTexture.bits());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0); // Unbind the texture
     // Note: Make sure to keep the shader program bound if you intend to set uniforms immediately after this
     glUseProgram(m_model_shader);
 
-    glUniform1i(glGetUniformLocation(m_model_shader, "textureSampler"), 1); // Use texture unit GL_TEXTURE1
-    std::cout << m_model_texture_image.pixelColor(0, 0).name().toStdString() << std::endl;
 }
 
-void Realtime::loadModel() {
-//    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/surreal/portal1.obj";
-    const std::string MODEL_PATH = "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.obj";
-    const QString TEXTURE_PATH = QString("/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/demo-viking/viking_room.png");
+void Realtime::loadModel(Model &model, std::string modelPath, std::string texturePath) {
 
     tinyobj::ObjReaderConfig reader_config;
-    reader_config.mtl_search_path = "./"; // Path to material files
+    reader_config.mtl_search_path = ""; // Path to material files
 
-    m_model_texture_image = QImage(TEXTURE_PATH).convertToFormat(QImage::Format_RGBA8888).mirrored();
+    model.modelTexture = QImage(texturePath.c_str()).convertToFormat(QImage::Format_RGBA8888).mirrored();
 
     tinyobj::ObjReader reader;
 
-    if (!reader.ParseFromFile(MODEL_PATH, reader_config)) {
+    if (!reader.ParseFromFile(modelPath, reader_config)) {
         if (!reader.Error().empty()) {
             std::cerr << "TinyObjReader: " << reader.Error();
         }
@@ -210,9 +229,9 @@ void Realtime::loadModel() {
                     tinyobj::real_t tx = attrib.texcoords[2*size_t(idx.texcoord_index)+0];
                     tinyobj::real_t ty = attrib.texcoords[2*size_t(idx.texcoord_index)+1];
 
-                    m_modelData.push_back(vx); m_modelData.push_back(vy); m_modelData.push_back(vz);
-                    m_modelData.push_back(nx); m_modelData.push_back(ny); m_modelData.push_back(nz);
-                    m_modelData.push_back(tx); m_modelData.push_back(ty);
+                    model.modelData.push_back(vx); model.modelData.push_back(vy); model.modelData.push_back(vz);
+                    model.modelData.push_back(nx); model.modelData.push_back(ny); model.modelData.push_back(nz);
+                    model.modelData.push_back(tx); model.modelData.push_back(ty);
                 }
             }
             index_offset += fv;
@@ -223,13 +242,13 @@ void Realtime::loadModel() {
     }
 }
 
-void Realtime::paintModel() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBindVertexArray(model_vao);
+void Realtime::paintModel(Model &model) {
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBindVertexArray(model.model_vao);
 
     // clear
     // Task 24: Bind FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);    
     // Task 28: Call glViewport
     glViewport(0, 0,  m_screen_width, m_screen_height);
     //link shader
@@ -242,11 +261,12 @@ void Realtime::paintModel() {
         lightsForShader(m_model_shader, m_renderData.shapes[0].primitive.material);
     }
 
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, m_model_texture);
+    glActiveTexture(GL_TEXTURE0 + model.textureIndex);
+    glBindTexture(GL_TEXTURE_2D, model.textureID);
+    glUniform1i(glGetUniformLocation(m_model_shader, "textureSampler"), model.textureIndex); // Use texture unit GL_TEXTURE1
 
     // Draw Command
-    glDrawArrays(GL_TRIANGLES, 0, m_modelData.size() / 8);
+    glDrawArrays(GL_TRIANGLES, 0, model.modelData.size() / 8);
 
     // Unbind Vertex Array and texture
     glBindVertexArray(0);
@@ -509,7 +529,9 @@ void Realtime::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 //    paintGeometry();
-    paintModel();
+    for(Model model : m_models) {
+        paintModel(model);
+    }
 
     //FBO stuff
     // Task 25: Bind the default framebuffer
@@ -600,6 +622,7 @@ void Realtime::makeFBO(){
 
     // Task 22: Unbind the FBO
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+
 }
 
 

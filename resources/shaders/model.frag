@@ -100,4 +100,8 @@ void main() {
         fragColor.rgb += specularColor*fatt*falloff;
         }
     }
+
+//    fragColor = texColor; //texture no phong
+//    fragColor = vec4(1); //white
+//    fragColor = vec4(outTexCoord[0]); //uv coordinates
 }

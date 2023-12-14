@@ -54,8 +54,7 @@ add_executable(${PROJECT_NAME}
     src/shapes/Cylinder.h
     src/camera/camera.h
     src/utils/debug.h
-
-
+    src/model.h
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
