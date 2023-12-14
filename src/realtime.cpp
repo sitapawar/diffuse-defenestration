@@ -114,7 +114,9 @@ void Realtime::initializeGL() {
         "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/plane/CanyonPlane.obj",
         "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/plane/BaseColor.png",
         "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/plane/CanyonLowPoly.obj",
-        "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/plane/CanyonTerrain.png"
+        "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/plane/CanyonTerrain.png",
+        "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/plane/Skybox.obj",
+        "/Users/andyburris/School/Semester 5/cs1230/diffuse-defenestration/scenefiles/plane/Skybox.png"
     };
     for(int i = 0; i < paths.size(); i+=2) {
         std::string modelPath = paths[i];
